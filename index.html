@@ -389,7 +389,7 @@ const YearbookWebsite = () => {
   return <div style={styles.app}><header style={styles.header}><div style={styles.headerContent}><button
     onClick={() => setCurrentPage("home")}
     style={styles.logoBtn}
-  ><Home size={24} /><span>{data.school.graduationYear}</span></button><nav style={styles.mainNav}><button onClick={() => setCurrentPage("all-students")} style={styles.navBtn}>All Students</button></nav></div></header><main style={styles.main}>{renderPage()}</main><footer style={styles.footer}><p>© {data.school.year} {data.school.name} • Last Updated: {data.lastUpdated}</p></footer></div>;
+  ><Home size={24} /><span>{data.school.graduationYear}</span></button><nav style={styles.mainNav}><button onClick={() => setCurrentPage("all-students")} style={styles.navBtn}>All Students</button></nav></div></header><main style={styles.main}>{renderPage()}</main><footer style={styles.footer}><p>© {new Date().getFullYear()} <a href="https://jfaquinojr.com" target="_blank" rel="noopener noreferrer" style={{color: '#667eea', textDecoration: 'none'}}>https://jfaquinojr.com</a></p></footer></div>;
 };
 const styles = {
   app: {
