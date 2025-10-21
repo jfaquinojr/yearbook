@@ -336,11 +336,11 @@ const YearbookWebsite = () => {
     const student = getStudentById(selectedStudentId);
     if (!student) return renderHome();
     const section = getSectionByStudentId(selectedStudentId);
-    return <div><button style={styles.backButton} onClick={() => viewSection(selectedSectionId)}><ArrowLeft size={18} /> Back to {section ? section.name : "Section"}</button><div style={styles.studentDetailCard}><div style={styles.studentDetailNav}><button style={styles.studentNavButton} onClick={() => navigateStudent(-1)}><ChevronLeft size={24} /></button></div><div style={styles.studentDetailContent}>{student.photo?.fullsize ? <img
+    return <div><button style={styles.backButton} onClick={() => viewSection(selectedSectionId)}><ArrowLeft size={18} /> Back to {section ? section.name : "Section"}</button><div style={styles.studentDetailCard}><div style={styles.studentDetailContent}>{student.photo?.fullsize ? <img
       src={student.photo.fullsize}
       alt={student.name}
       style={styles.studentDetailImg}
-    /> : <div style={styles.studentDetailImgPlaceholder}><Users size={80} color="#999" /></div>}{student.deathDate ? <div style={styles.memorialTribute}><Cross size={24} style={{ color: "#4b5563" }} /><h1 style={styles.studentDetailName}>{student.name}</h1><p style={styles.memorialTributeText}>In Loving Memory</p><p style={styles.memorialDates}>{student.birthdate} – {student.deathDate}</p></div> : <><h1 style={styles.studentDetailName}>{student.name}</h1><p style={styles.studentDetailGoal}>"{student.goal}"</p><p style={styles.studentDetailBirthdate}>Born: {student.birthdate}</p></>}{section && <div style={styles.studentDetailSectionLink} onClick={() => viewSection(section.id)}><img src={section.image} alt={section.name} style={styles.studentDetailSectionImg} /><span>From {section.name}</span></div>}</div><div style={styles.studentDetailNav}><button style={styles.studentNavButton} onClick={() => navigateStudent(1)}><ChevronRight size={24} /></button></div></div></div>;
+    /> : <div style={styles.studentDetailImgPlaceholder}><Users size={80} color="#999" /></div>}{student.deathDate ? <div style={styles.memorialTribute}><Cross size={24} style={{ color: "#4b5563" }} /><h1 style={styles.studentDetailName}>{student.name}</h1><p style={styles.memorialTributeText}>In Loving Memory</p><p style={styles.memorialDates}>{student.birthdate} – {student.deathDate}</p></div> : <><h1 style={styles.studentDetailName}>{student.name}</h1><p style={styles.studentDetailGoal}>"{student.goal}"</p><p style={styles.studentDetailBirthdate}>Born: {student.birthdate}</p></>}{section && <div style={styles.studentDetailSectionLink} onClick={() => viewSection(section.id)}><img src={section.image} alt={section.name} style={styles.studentDetailSectionImg} /><span>From {section.name}</span></div>}<div style={styles.studentDetailNavBottom}><button style={styles.studentNavButton} onClick={() => navigateStudent(-1)}><ChevronLeft size={24} /><span style={styles.navButtonLabel}>Previous</span></button><button style={styles.studentNavButton} onClick={() => navigateStudent(1)}><span style={styles.navButtonLabel}>Next</span><ChevronRight size={24} /></button></div></div></div></div>;
   };
   const renderAllStudents = () => <div><h2 style={styles.pageTitle}>All Students</h2><div style={{ ...styles.filters, ...width >= 768 ? styles["@media (min-width: 768px)"].filters : {} }}><div style={{ ...styles.searchBox, ...width >= 768 ? styles["@media (min-width: 768px)"].searchBox : {} }}><Search size={20} color="#6b7280" /><input
     type="text"
@@ -637,6 +637,7 @@ const styles = {
   // --- Student Detail ---
   studentDetailCard: {
     display: "flex",
+    flexDirection: "column",
     backgroundColor: "white",
     borderRadius: "12px",
     border: "1px solid #e5e7eb",
@@ -660,13 +661,31 @@ const styles = {
     padding: "0.25rem",
     backgroundColor: "#f3f4f6"
   },
+  studentDetailNavBottom: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "1rem",
+    width: "100%",
+    marginTop: "2rem",
+    paddingTop: "1.5rem",
+    borderTop: "1px solid #e5e7eb"
+  },
   studentNavButton: {
-    padding: "0.25rem",
-    border: "none",
-    borderRadius: "50%",
-    backgroundColor: "transparent",
+    display: "flex",
+    alignItems: "center",
+    gap: "0.5rem",
+    padding: "0.75rem 1.5rem",
+    border: "1px solid #d1d5db",
+    borderRadius: "8px",
+    backgroundColor: "white",
     color: "#4b5563",
-    cursor: "pointer"
+    cursor: "pointer",
+    fontSize: "0.95rem",
+    fontWeight: 500,
+    transition: "all 0.2s"
+  },
+  navButtonLabel: {
+    fontWeight: 500
   },
   studentDetailImg: {
     width: "350px",
