@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yearbook-website</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
+  <style>
+    body { margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, useMemo, useRef, useReducer, useContext, createContext, memo } = React;
+    
+    // Lucide icons stub - create simple icon components
+    const createIcon = (name) => ({ children, size = 24, className = '', ...props }) => 
+      React.createElement('svg', {
+        xmlns: 'http://www.w3.org/2000/svg',
+        width: size,
+        height: size,
+        viewBox: '0 0 24 24',
+        fill: 'none',
+        stroke: 'currentColor',
+        strokeWidth: 2,
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+        className: className,
+        ...props
+      }, children);
+    
+    const Search = createIcon('Search');
+    const Users = createIcon('Users');
+    const BookOpen = createIcon('BookOpen');
+    const Heart = createIcon('Heart');
+    const ChevronLeft = createIcon('ChevronLeft');
+    const ChevronRight = createIcon('ChevronRight');
+    const Home = createIcon('Home');
+    const X = createIcon('X');
+    const Upload = createIcon('Upload');
+    const Book = createIcon('Book');
+    const Plus = createIcon('Plus');
+    const Trash2 = createIcon('Trash2');
+    const Edit = createIcon('Edit');
+    const Scale = createIcon('Scale');
+    const ShoppingCart = createIcon('ShoppingCart');
+    const FileCode = createIcon('FileCode');
+    const ChevronDown = createIcon('ChevronDown');
+    const Download = createIcon('Download');
+    
+const YearbookWebsite = () => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState("home");
+  const [selectedSection, setSelectedSection] = useState(null);
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterSection, setFilterSection] = useState("all");
+  useEffect(() => {
+    loadDataFromFile();
+  }, []);
+  const loadDataFromFile = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch('./yearbook-data.json');
+      if (!response.ok) {
+        throw new Error("Data file not found. Please upload a yearbook data JSON file.");
+      }
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Data file not found. Please upload a yearbook data JSON file.");
+      }
+      const jsonData = await response.json();
+      if (!jsonData.school) {
+        jsonData.school = {
+          name: "Yearbook",
+          year: (/* @__PURE__ */ new Date()).getFullYear().toString(),
+          graduationYear: `Class of ${(/* @__PURE__ */ new Date()).getFullYear()}`
+        };
+      }
+      setData(jsonData);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error loading data:", err);
+      setError("No yearbook data found. Please upload your yearbook JSON file below.");
+      setLoading(false);
+    }
+  };
+  const handleFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const jsonData = JSON.parse(event.target?.result);
+        if (!jsonData.students || !jsonData.classSections) {
+          throw new Error("Invalid data structure. Must contain students and classSections arrays.");
+        }
+        if (!jsonData.school) {
+          jsonData.school = {
+            name: "Yearbook",
+            year: (/* @__PURE__ */ new Date()).getFullYear().toString(),
+            graduationYear: `Class of ${(/* @__PURE__ */ new Date()).getFullYear()}`
+          };
+        }
+        setData(jsonData);
+        setError(null);
+        setLoading(false);
+      } catch (err) {
+        setError("Invalid JSON file. Please check the file format.");
+        console.error("Error parsing JSON:", err);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+  const getStudentsForSection = (sectionId) => {
+    const section = data.classSections.find((s) => s.id === sectionId);
+    if (!section) return [];
+    return section.studentIds.map((id) => data.students.find((s) => s.id === id)).filter(Boolean);
+  };
+  const getSectionForStudent = (studentId) => {
+    return data.classSections.find((section) => section.studentIds.includes(studentId));
+  };
+  const filteredStudents = useMemo(() => {
+    if (!data) return [];
+    let students = data.students;
+    if (searchQuery) {
+      students = students.filter(
+        (s) => s.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    if (filterSection !== "all") {
+      const section = data.classSections.find((s) => s.id === filterSection);
+      if (section) {
+        students = students.filter((s) => section.studentIds.includes(s.id));
+      }
+    }
+    return students;
+  }, [data, searchQuery, filterSection]);
+  const MemorialIndicator = ({ student, showDate = false }) => {
+    if (!student.deathDate) return null;
+    const deathYear = new Date(student.deathDate).getFullYear();
+    return <span style={styles.memorialIndicator} title={`Passed away: ${student.deathDate}`}>
+        † {showDate && <span style={styles.deathYear}>{deathYear}</span>}</span>;
+  };
+  const StudentCard = ({ student, onClick }) => {
+    const section = getSectionForStudent(student.id);
+    return <div style={styles.studentCard} onClick={() => onClick(student)}><div style={styles.studentPhoto}>{student.photo?.thumbnail ? <img src={student.photo.thumbnail} alt={student.name} loading="lazy" style={styles.studentPhotoImg} /> : <div style={styles.noPhotoPlaceholder}><Users size={48} color="#999" /></div>}</div><div style={styles.studentInfo}><h3 style={styles.studentName}>{student.name} <MemorialIndicator student={student} /></h3>{student.deathDate ? <p style={{ ...styles.studentDates, ...styles.memorialDates }}>{new Date(student.birthdate).getFullYear()} - {new Date(student.deathDate).getFullYear()}</p> : <p style={styles.studentDates}>Born {new Date(student.birthdate).getFullYear()}</p>}<p style={styles.studentGoal}>{student.goal}</p>{section && <span style={styles.sectionBadge}>{section.name}</span>}</div></div>;
+  };
+  const HomePage = () => <div style={styles.page}><div style={styles.hero}><h1 style={styles.heroH1}>{data.school.name}</h1><h2 style={styles.heroH2}>{data.school.graduationYear}</h2><p style={styles.heroSubtitle}>Memories That Last Forever</p></div><div style={styles.statsGrid}><div style={styles.statCard}><Users size={32} color="#667eea" /><h3 style={styles.statNumber}>{data.students.length}</h3><p style={styles.statLabel}>Students</p></div><div style={styles.statCard}><BookOpen size={32} color="#667eea" /><h3 style={styles.statNumber}>{data.classSections.length}</h3><p style={styles.statLabel}>Class Sections</p></div><div style={styles.statCard}><Heart size={32} color="#667eea" /><h3 style={styles.statNumber}>{data.students.filter((s) => s.deathDate).length}</h3><p style={styles.statLabel}>In Memoriam</p></div></div><div style={styles.sectionOverview}><h2 style={styles.sectionOverviewTitle}>Class Sections</h2><div style={styles.sectionGrid}>{data.classSections.map((section) => <div
+    key={section.id}
+    style={styles.sectionOverviewCard}
+    onClick={() => {
+      setSelectedSection(section);
+      setCurrentPage("section-detail");
+    }}
+  ><div style={styles.sectionImageContainer}><img src={section.image} alt={section.name} style={styles.sectionImage} /></div><div style={styles.sectionCardContent}><h3 style={styles.sectionCardTitle}>{section.name}</h3><p style={styles.teacherName}>{section.homeroomTeacher}</p><p style={styles.studentCount}>{section.studentIds.length} students</p></div></div>)}</div></div><div style={styles.quickActions}><button onClick={() => setCurrentPage("all-students")} style={{ ...styles.btn, ...styles.btnPrimary }}>
+          View All Students
+        </button></div></div>;
+  const SectionDetailPage = () => {
+    const students = getStudentsForSection(selectedSection.id);
+    const currentIndex = data.classSections.findIndex((s) => s.id === selectedSection.id);
+    const prevSection = currentIndex > 0 ? data.classSections[currentIndex - 1] : null;
+    const nextSection = currentIndex < data.classSections.length - 1 ? data.classSections[currentIndex + 1] : null;
+    return <div style={styles.page}><div style={styles.pageHeader}><div><h1 style={styles.pageTitle}>{selectedSection.name}</h1><p style={styles.teacherName}>Homeroom Teacher: {selectedSection.homeroomTeacher}</p><p style={styles.studentCount}>{students.length} students</p></div><div style={styles.navigationControls}>{prevSection && <button
+      onClick={() => setSelectedSection(prevSection)}
+      style={{ ...styles.btn, ...styles.btnNav }}
+    ><ChevronLeft size={20} /> {prevSection.name}</button>}{nextSection && <button
+      onClick={() => setSelectedSection(nextSection)}
+      style={{ ...styles.btn, ...styles.btnNav }}
+    >{nextSection.name} <ChevronRight size={20} /></button>}</div></div><div style={styles.studentGrid}>{students.map((student) => <StudentCard
+      key={student.id}
+      student={student}
+      onClick={(s) => {
+        setSelectedStudent(s);
+        setCurrentPage("student-detail");
+      }}
+    />)}</div></div>;
+  };
+  const AllStudentsPage = useMemo(() => {
+    if (!data) return null;
+    return <div style={styles.page}><h1 style={styles.pageTitle}>All Students</h1><div style={styles.filters}><div style={styles.searchBox}><Search size={20} color="#666" /><input
+      id="student-search"
+      type="text"
+      placeholder="Search by name..."
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      style={styles.searchInput}
+    />{searchQuery && <button onClick={() => setSearchQuery("")} style={styles.clearBtn}><X size={16} /></button>}</div><select
+      value={filterSection}
+      onChange={(e) => setFilterSection(e.target.value)}
+      style={styles.sectionFilter}
+    ><option value="all">All Sections</option>{data.classSections.map((section) => <option key={section.id} value={section.id}>{section.name}</option>)}</select></div>{filteredStudents.length === 0 ? <div style={styles.emptyState}><p>No students found matching your criteria.</p></div> : <div style={styles.studentGrid}>{filteredStudents.map((student) => <StudentCard
+      key={student.id}
+      student={student}
+      onClick={(s) => {
+        setSelectedStudent(s);
+        setCurrentPage("student-detail");
+      }}
+    />)}</div>}</div>;
+  }, [searchQuery, filterSection, filteredStudents, data]);
+  const StudentDetailPage = () => {
+    const section = getSectionForStudent(selectedStudent.id);
+    const sectionStudents = section ? getStudentsForSection(section.id) : [];
+    const currentIndex = sectionStudents.findIndex((s) => s.id === selectedStudent.id);
+    const prevStudent = currentIndex > 0 ? sectionStudents[currentIndex - 1] : null;
+    const nextStudent = currentIndex < sectionStudents.length - 1 ? sectionStudents[currentIndex + 1] : null;
+    return <div style={styles.page}><div style={styles.studentDetailContainer}><div style={styles.studentPhotoLarge}>{selectedStudent.photo?.fullsize ? <img src={selectedStudent.photo.fullsize} alt={selectedStudent.name} style={styles.studentPhotoLargeImg} /> : <div style={styles.noPhotoPlaceholderLarge}><Users size={120} color="#999" /><p style={styles.noPhotoText}>No Photo Available</p></div>}</div><div style={styles.studentDetailInfo}><h1 style={styles.detailTitle}>{selectedStudent.name} <MemorialIndicator student={selectedStudent} showDate /></h1>{selectedStudent.deathDate ? <div style={styles.memorialTribute}><p style={styles.tributeDates}>{new Date(selectedStudent.birthdate).toLocaleDateString()} - {new Date(selectedStudent.deathDate).toLocaleDateString()}</p><p style={styles.memorialMessage}>In Loving Memory</p><p style={styles.restInPeace}>Rest in Peace</p></div> : <p style={styles.birthdate}>Born: {new Date(selectedStudent.birthdate).toLocaleDateString()}</p>}<div style={styles.detailSection}><h3 style={styles.detailSectionTitle}>Future Goals</h3><p style={styles.detailSectionText}>{selectedStudent.goal}</p></div>{section && <div style={styles.detailSection}><h3 style={styles.detailSectionTitle}>Class Section</h3><button
+      onClick={() => {
+        setSelectedSection(section);
+        setCurrentPage("section-detail");
+      }}
+      style={styles.sectionLinkBtn}
+    >{section.name} - {section.homeroomTeacher}</button></div>}<div style={styles.navigationControls}>{prevStudent && <button
+      onClick={() => setSelectedStudent(prevStudent)}
+      style={{ ...styles.btn, ...styles.btnNav }}
+    ><ChevronLeft size={20} /> Previous
+                </button>}{nextStudent && <button
+      onClick={() => setSelectedStudent(nextStudent)}
+      style={{ ...styles.btn, ...styles.btnNav }}
+    >
+                  Next <ChevronRight size={20} /></button>}</div></div></div></div>;
+  };
+  const renderPage = () => {
+    switch (currentPage) {
+      case "home":
+        return <HomePage key="home" />;
+      case "section-detail":
+        return selectedSection ? <SectionDetailPage key={selectedSection.id} /> : <HomePage key="home" />;
+      case "all-students":
+        return AllStudentsPage;
+      case "student-detail":
+        return selectedStudent ? <StudentDetailPage key={selectedStudent.id} /> : <HomePage key="home" />;
+      default:
+        return <HomePage key="home" />;
+    }
+  };
+  if (loading) {
+    return <div style={styles.app}><div style={styles.loadingContainer}><BookOpen size={64} color="#667eea" /><h2 style={styles.loadingTitle}>Loading Yearbook...</h2><p style={styles.loadingText}>Please wait while we load your memories</p></div></div>;
+  }
+  if (error || !data) {
+    return <div style={styles.app}><div style={styles.loadingContainer}><BookOpen size={64} color="#667eea" /><h2 style={styles.loadingTitle}>Welcome to Digital Yearbook</h2><p style={styles.errorText}>{error || "No yearbook data found"}</p><p style={styles.instructionText}>
+            Please upload a yearbook JSON data file to get started
+          </p><label style={styles.uploadLabel}><Upload size={24} /><span>Upload Yearbook Data (JSON)</span><input
+      type="file"
+      accept=".json"
+      onChange={handleFileUpload}
+      style={styles.fileInput}
+    /></label><div style={styles.instructionBox}><h3 style={styles.instructionBoxTitle}>How to use:</h3><ol style={styles.instructionList}><li>Export your yearbook data as JSON from the Data Manager</li><li>Save the JSON file to your computer</li><li>Click the upload button above to load your yearbook</li><li>Place your images folder in the same directory as this website</li></ol></div></div></div>;
+  }
+  return <div style={styles.app}><header style={styles.header}><div style={styles.headerContent}><button
+    onClick={() => setCurrentPage("home")}
+    style={styles.logoBtn}
+  ><Home size={24} /><span>{data.school.graduationYear}</span></button><nav style={styles.mainNav}><button onClick={() => setCurrentPage("all-students")} style={styles.navBtn}>All Students</button></nav></div></header><main style={styles.main}>{renderPage()}</main><footer style={styles.footer}><p>© {data.school.year} {data.school.name} • Last Updated: {data.lastUpdated}</p></footer></div>;
+};
+const styles = {
+  app: {
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif',
+    minHeight: "100vh",
+    display: "flex",
+    flexDirection: "column",
+    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+  },
+  header: {
+    background: "rgba(255, 255, 255, 0.98)",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+    position: "sticky",
+    top: 0,
+    zIndex: 100
+  },
+  headerContent: {
+    maxWidth: "1400px",
+    margin: "0 auto",
+    padding: "1rem 2rem",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center"
+  },
+  logoBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: "0.75rem",
+    background: "none",
+    border: "none",
+    fontSize: "1.25rem",
+    fontWeight: 700,
+    color: "#667eea",
+    cursor: "pointer",
+    padding: "0.5rem 1rem",
+    borderRadius: "8px",
+    transition: "all 0.2s"
+  },
+  mainNav: {
+    display: "flex",
+    gap: "1rem"
+  },
+  navBtn: {
+    background: "none",
+    border: "none",
+    padding: "0.75rem 1.5rem",
+    fontSize: "1rem",
+    fontWeight: 500,
+    color: "#333",
+    cursor: "pointer",
+    borderRadius: "8px",
+    transition: "all 0.2s"
+  },
+  main: {
+    flex: 1,
+    maxWidth: "1400px",
+    width: "100%",
+    margin: "0 auto",
+    padding: "2rem"
+  },
+  page: {
+    background: "white",
+    borderRadius: "16px",
+    padding: "2rem",
+    boxShadow: "0 4px 20px rgba(0,0,0,0.1)"
+  },
+  hero: {
+    textAlign: "center",
+    padding: "3rem 1rem",
+    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    borderRadius: "12px",
+    color: "white",
+    marginBottom: "2rem"
+  },
+  heroH1: {
+    fontSize: "3rem",
+    marginBottom: "0.5rem"
+  },
+  heroH2: {
+    fontSize: "2rem",
+    fontWeight: 400,
+    marginBottom: "0.5rem"
+  },
+  heroSubtitle: {
+    fontSize: "1.25rem",
+    opacity: 0.9
+  },
+  statsGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+    gap: "1.5rem",
+    marginBottom: "3rem"
+  },
+  statCard: {
+    background: "#f8f9fa",
+    padding: "2rem",
+    borderRadius: "12px",
+    textAlign: "center",
+    transition: "transform 0.2s",
+    cursor: "default"
+  },
+  statNumber: {
+    fontSize: "2.5rem",
+    color: "#333",
+    marginBottom: "0.5rem",
+    marginTop: "1rem"
+  },
+  statLabel: {
+    color: "#666",
+    fontSize: "1.1rem"
+  },
+  sectionOverview: {
+    marginBottom: "2rem"
+  },
+  sectionOverviewTitle: {
+    textAlign: "center",
+    marginBottom: "2rem",
+    fontSize: "2rem",
+    color: "#333"
+  },
+  sectionGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+    gap: "1.5rem"
+  },
+  sectionGridLarge: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+    gap: "1.5rem"
+  },
+  sectionOverviewCard: {
+    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    borderRadius: "12px",
+    overflow: "hidden",
+    cursor: "pointer",
+    transition: "all 0.3s",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+  },
+  sectionImageContainer: {
+    width: "100%",
+    height: "180px",
+    overflow: "hidden",
+    position: "relative"
+  },
+  sectionImage: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover"
+  },
+  sectionCardContent: {
+    padding: "1.5rem",
+    color: "white"
+  },
+  sectionCard: {
+    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    padding: "2rem",
+    borderRadius: "12px",
+    color: "white",
+    cursor: "pointer",
+    transition: "all 0.3s"
+  },
+  sectionCardTitle: {
+    fontSize: "1.75rem",
+    marginBottom: "0.5rem"
+  },
+  sectionCardH2: {
+    fontSize: "1.75rem",
+    marginBottom: "0.5rem"
+  },
+  teacherName: {
+    opacity: 0.9,
+    marginBottom: "0.5rem"
+  },
+  studentCount: {
+    fontSize: "1.1rem",
+    fontWeight: 500
+  },
+  sectionHeader: {
+    marginBottom: "1rem"
+  },
+  sectionPreview: {
+    marginTop: "1.5rem"
+  },
+  previewPhotos: {
+    display: "flex",
+    gap: "0.5rem",
+    marginBottom: "1rem"
+  },
+  previewThumb: {
+    width: "50px",
+    height: "50px",
+    borderRadius: "50%",
+    objectFit: "cover",
+    border: "2px solid white"
+  },
+  previewThumbPlaceholder: {
+    width: "50px",
+    height: "50px",
+    borderRadius: "50%",
+    background: "#f8f9fa",
+    border: "2px solid white",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  quickActions: {
+    display: "flex",
+    gap: "1rem",
+    justifyContent: "center",
+    marginTop: "2rem"
+  },
+  btn: {
+    padding: "1rem 2rem",
+    border: "none",
+    borderRadius: "8px",
+    fontSize: "1rem",
+    fontWeight: 600,
+    cursor: "pointer",
+    transition: "all 0.2s",
+    display: "flex",
+    alignItems: "center",
+    gap: "0.5rem"
+  },
+  btnPrimary: {
+    background: "#667eea",
+    color: "white"
+  },
+  btnSecondary: {
+    background: "#f8f9fa",
+    color: "#333"
+  },
+  btnNav: {
+    background: "#f8f9fa",
+    color: "#333",
+    padding: "0.75rem 1.5rem"
+  },
+  sectionLinkBtn: {
+    background: "none",
+    border: "none",
+    padding: 0,
+    color: "#667eea",
+    fontSize: "1.1rem",
+    cursor: "pointer",
+    textDecoration: "underline",
+    textAlign: "left",
+    fontFamily: "inherit"
+  },
+  pageTitle: {
+    fontSize: "2.5rem",
+    color: "#333",
+    marginBottom: "1.5rem"
+  },
+  pageHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: "2rem",
+    flexWrap: "wrap",
+    gap: "1rem"
+  },
+  navigationControls: {
+    display: "flex",
+    gap: "1rem",
+    flexWrap: "wrap"
+  },
+  studentGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+    gap: "1.5rem"
+  },
+  studentCard: {
+    background: "white",
+    border: "1px solid #e0e0e0",
+    borderRadius: "12px",
+    overflow: "hidden",
+    cursor: "pointer",
+    transition: "all 0.3s"
+  },
+  studentPhoto: {
+    width: "100%",
+    aspectRatio: "1",
+    overflow: "hidden",
+    background: "#f8f9fa"
+  },
+  studentPhotoImg: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover"
+  },
+  studentInfo: {
+    padding: "1.25rem"
+  },
+  studentName: {
+    fontSize: "1.25rem",
+    color: "#333",
+    marginBottom: "0.5rem",
+    display: "flex",
+    alignItems: "center",
+    gap: "0.5rem"
+  },
+  memorialIndicator: {
+    color: "#6c757d",
+    fontStyle: "italic",
+    fontSize: "1.1rem",
+    cursor: "help"
+  },
+  deathYear: {
+    fontSize: "0.9rem",
+    fontStyle: "normal"
+  },
+  studentDates: {
+    color: "#666",
+    fontSize: "0.95rem",
+    marginBottom: "0.75rem"
+  },
+  memorialDates: {
+    fontStyle: "italic",
+    color: "#6c757d"
+  },
+  studentGoal: {
+    color: "#555",
+    fontSize: "0.95rem",
+    lineHeight: 1.5,
+    marginBottom: "0.75rem"
+  },
+  sectionBadge: {
+    display: "inline-block",
+    background: "#667eea",
+    color: "white",
+    padding: "0.25rem 0.75rem",
+    borderRadius: "12px",
+    fontSize: "0.85rem",
+    fontWeight: 500
+  },
+  filters: {
+    display: "flex",
+    gap: "1rem",
+    marginBottom: "2rem",
+    flexWrap: "wrap"
+  },
+  searchBox: {
+    flex: 1,
+    minWidth: "250px",
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    background: "#f8f9fa",
+    borderRadius: "8px",
+    padding: "0.75rem 1rem"
+  },
+  searchInput: {
+    flex: 1,
+    border: "none",
+    background: "none",
+    fontSize: "1rem",
+    outline: "none",
+    marginLeft: "0.75rem"
+  },
+  clearBtn: {
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    padding: "0.25rem",
+    color: "#666",
+    display: "flex",
+    alignItems: "center"
+  },
+  sectionFilter: {
+    padding: "0.75rem 1rem",
+    border: "1px solid #e0e0e0",
+    borderRadius: "8px",
+    fontSize: "1rem",
+    background: "white",
+    cursor: "pointer",
+    minWidth: "200px"
+  },
+  emptyState: {
+    textAlign: "center",
+    padding: "4rem 2rem",
+    color: "#666"
+  },
+  studentDetailContainer: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "3rem"
+  },
+  studentPhotoLarge: {
+    position: "sticky",
+    top: "100px"
+  },
+  studentPhotoLargeImg: {
+    width: "100%",
+    borderRadius: "12px",
+    boxShadow: "0 4px 20px rgba(0,0,0,0.1)"
+  },
+  studentDetailInfo: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "1rem"
+  },
+  detailTitle: {
+    fontSize: "2.5rem",
+    color: "#333",
+    marginBottom: "1rem",
+    display: "flex",
+    alignItems: "center",
+    gap: "0.5rem",
+    flexWrap: "wrap"
+  },
+  memorialTribute: {
+    background: "#f8f9fa",
+    padding: "1.5rem",
+    borderRadius: "8px",
+    marginBottom: "2rem",
+    borderLeft: "4px solid #6c757d"
+  },
+  tributeDates: {
+    fontSize: "1.1rem",
+    color: "#666",
+    marginBottom: "0.75rem"
+  },
+  memorialMessage: {
+    fontSize: "1.25rem",
+    color: "#333",
+    fontWeight: 500,
+    marginBottom: "0.5rem"
+  },
+  restInPeace: {
+    fontStyle: "italic",
+    color: "#6c757d",
+    fontSize: "1.1rem"
+  },
+  birthdate: {
+    fontSize: "1.1rem",
+    color: "#666",
+    marginBottom: "2rem"
+  },
+  detailSection: {
+    marginBottom: "2rem"
+  },
+  detailSectionTitle: {
+    fontSize: "1.5rem",
+    color: "#333",
+    marginBottom: "0.75rem",
+    borderBottom: "2px solid #667eea",
+    paddingBottom: "0.5rem"
+  },
+  detailSectionText: {
+    fontSize: "1.1rem",
+    color: "#555",
+    lineHeight: 1.6
+  },
+  footer: {
+    background: "rgba(255, 255, 255, 0.95)",
+    padding: "1.5rem",
+    textAlign: "center",
+    color: "#666",
+    marginTop: "2rem"
+  },
+  loadingContainer: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: "100vh",
+    padding: "2rem",
+    textAlign: "center"
+  },
+  loadingTitle: {
+    fontSize: "2rem",
+    color: "white",
+    marginTop: "1.5rem",
+    marginBottom: "0.5rem"
+  },
+  loadingText: {
+    fontSize: "1.1rem",
+    color: "rgba(255, 255, 255, 0.9)"
+  },
+  errorText: {
+    fontSize: "1.1rem",
+    color: "#ff6b6b",
+    marginBottom: "1rem",
+    background: "rgba(255, 255, 255, 0.95)",
+    padding: "1rem",
+    borderRadius: "8px"
+  },
+  instructionText: {
+    fontSize: "1.1rem",
+    color: "rgba(255, 255, 255, 0.95)",
+    marginBottom: "2rem"
+  },
+  uploadLabel: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "0.75rem",
+    background: "white",
+    color: "#667eea",
+    padding: "1rem 2rem",
+    borderRadius: "12px",
+    fontSize: "1.1rem",
+    fontWeight: 600,
+    cursor: "pointer",
+    transition: "all 0.2s",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+    marginBottom: "2rem"
+  },
+  fileInput: {
+    display: "none"
+  },
+  instructionBox: {
+    background: "rgba(255, 255, 255, 0.95)",
+    borderRadius: "12px",
+    padding: "2rem",
+    maxWidth: "600px",
+    textAlign: "left"
+  },
+  instructionBoxTitle: {
+    fontSize: "1.5rem",
+    color: "#333",
+    marginBottom: "1rem"
+  },
+  instructionList: {
+    color: "#666",
+    fontSize: "1rem",
+    lineHeight: 1.8,
+    paddingLeft: "1.5rem"
+  },
+  noPhotoPlaceholder: {
+    width: "100%",
+    height: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "#f8f9fa"
+  },
+  noPhotoPlaceholderLarge: {
+    width: "100%",
+    aspectRatio: "1",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "#f8f9fa",
+    borderRadius: "12px"
+  },
+  noPhotoText: {
+    marginTop: "1rem",
+    color: "#999",
+    fontSize: "1.1rem"
+  }
+};
+var stdin_default = YearbookWebsite;
+    
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(React.createElement(YearbookWebsite));
+  </script>
+</body>
+</html>

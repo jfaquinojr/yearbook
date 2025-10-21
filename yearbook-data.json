@@ -1,0 +1,119 @@
+{
+    "school": {
+    "name": "Saint Mary's College",
+    "year": "1997",
+    "graduationYear": "Batch 97"
+  },
+  "classSections": [
+    {
+      "id": "f2r4qvbmi",
+      "name": "Mother Ignacia del Espiritu Santo",
+      "homeroomTeacher": "Ms. Marissa Acorin",
+      "studentIds": [
+        "qn5n42abj",
+        "sp4pi8but"
+      ],
+      "image": "images/sections/mother-ignacia-del-espiritu-santo.jpg"
+    },
+    {
+      "id": "re436kw8x",
+      "name": "Our Lady of Assumption",
+      "homeroomTeacher": "Mrs Lening Baquilod",
+      "studentIds": [
+        "cp9tz3w1t",
+        "t34zf2gea"
+      ],
+      "image": "images/sections/our-lady-of-assumption.jpg"
+    },
+    {
+      "id": "ubybl23no",
+      "name": "Our Lady of Immaculate Conception",
+      "homeroomTeacher": "Mrs Ninfa Quirante",
+      "studentIds": [
+        "9eid1t1ir",
+        "3lq07ws25",
+        "k74m0ugry"
+      ],
+      "image": "images/sections/our-lady-of-immaculate-conception.jpg"
+    }
+  ],
+  "students": [
+    {
+      "id": "qn5n42abj",
+      "name": "Edward Abogadie",
+      "birthdate": "1980-05-21",
+      "goal": "I find fun in assembling disarranged parts, that's why I want to be a Mechanical Engineer",
+      "photo": {
+        "thumbnail": "images/thumbnails/edward-abogadie-thumb.jpg",
+        "fullsize": "images/fullsize/edward-abogadie.jpg"
+      },
+      "timestamp": "2025-10-21T14:55:34.506Z"
+    },
+    {
+      "id": "sp4pi8but",
+      "name": "Rael Adoan",
+      "birthdate": "1979-12-21",
+      "goal": "I love my country so I want to be a good Filipino citizen",
+      "photo": {
+        "thumbnail": "images/thumbnails/rael-adoan-thumb.jpg",
+        "fullsize": "images/fullsize/rael-adoan.jpg"
+      },
+      "timestamp": "2025-10-21T14:59:17.220Z"
+    },
+    {
+      "id": "9eid1t1ir",
+      "name": "Carlo Afable",
+      "birthdate": "1980-08-08",
+      "goal": "To be a Mechanical Engineer",
+      "photo": {
+        "thumbnail": "images/thumbnails/carlo-afable-thumb.jpg",
+        "fullsize": "images/fullsize/carlo-afable.jpg"
+      },
+      "timestamp": "2025-10-21T14:59:09.853Z"
+    },
+    {
+      "id": "cp9tz3w1t",
+      "name": "Rex Angeles",
+      "birthdate": "1979-12-06",
+      "goal": "I want to be a professional and earn money",
+      "photo": {
+        "thumbnail": "images/thumbnails/rex-angeles-thumb.jpg",
+        "fullsize": "images/fullsize/rex-angeles.jpg"
+      },
+      "timestamp": "2025-10-21T14:59:33.704Z"
+    },
+    {
+      "id": "3lq07ws25",
+      "name": "Jeremy Abellar",
+      "birthdate": "1980-07-08",
+      "goal": "To be a professional basketball player",
+      "photo": null,
+      "timestamp": "2025-10-21T15:03:45.816Z"
+    },
+    {
+      "id": "k74m0ugry",
+      "name": "Michael Alma",
+      "birthdate": "1980-06-21",
+      "goal": "To join the Navy",
+      "photo": {
+        "thumbnail": "images/thumbnails/michael-alma-thumb.jpg",
+        "fullsize": "images/fullsize/michael-alma.jpg"
+      },
+      "timestamp": "2025-10-21T15:03:18.019Z"
+    },
+    {
+      "id": "t34zf2gea",
+      "name": "Arsenio Arre",
+      "birthdate": "1980-10-19",
+      "deathDate": "2007-10-21",
+      "goal": "To be an engineer",
+      "photo": {
+        "thumbnail": "images/thumbnails/arsenio-arre-thumb.jpg",
+        "fullsize": "images/fullsize/arsenio-arre.jpg"
+      },
+      "timestamp": "2025-10-21T17:54:10.628Z"
+    }
+  ],
+  "lastUpdated": "2025-10-21",
+  "generatedBy": "Yearbook Data Manager"
+}
