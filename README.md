@@ -89,4 +89,4 @@ Works in any modern browser that supports ES6 and React 18.
 
 ---
 
-Made with simplicity in mind. [jfaquinojr.com](https://jfaquinojr.com)
+**Vibe-coded** ;) with simplicity in mind.
